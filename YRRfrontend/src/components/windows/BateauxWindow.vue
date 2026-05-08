@@ -91,7 +91,14 @@ const seriesList = ref([
 async function loadBateaux() {
   try {
     const res = await fetch(API)
+
+    if (!res.ok) {
+      throw new Error('Erreur API')
+    }
+
     bateaux.value = await res.json()
+
+    console.log(bateaux.value)
   } catch (err) {
     console.error('Erreur chargement bateaux:', err)
   }
@@ -106,26 +113,36 @@ async function addBateau() {
   ) return
 
   try {
-    await fetch(API, {
+    const res = await fetch(API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(newBateau.value)
     })
 
-    newBateau.value.nom = ''
-    newBateau.value.type = ''
-    newBateau.value.skippers = ''
-    newBateau.value.serie = ''
+    const data = await res.json()
 
-    loadBateaux()
+    console.log('Réponse API:', data)
+
+    if (!res.ok) {
+      throw new Error(data.error)
+    }
+
+    newBateau.value = {
+      nom: '',
+      type: '',
+      skippers: '',
+      serie: ''
+    }
+
+    await loadBateaux()
+
   } catch (err) {
     console.error('Erreur ajout bateau:', err)
   }
 }
 
-/**
- * DELETE bateau
- */
 async function removeBateau(bateau) {
   try {
     await fetch(`${API}/${bateau._id}`, {

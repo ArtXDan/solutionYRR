@@ -12,14 +12,33 @@
     <!-- List of séries -->
     <ul class="list">
       <li
-        v-for="(serie, index) in series"
-        :key="index"
-        @click="selectSerie(index)"
-        :class="{ active: selectedIndex === index }"
-      >
-        <span>{{ serie.nom }} ({{ serie.date }})</span>
-        <button @click.stop="removeSerie(index)">X</button>
-      </li>
+  v-for="(serie, index) in series"
+  :key="index"
+  @click="selectSerie(index)"
+  :class="{ active: selectedIndex === index }"
+>
+
+  <span>
+    {{ serie.nom }} ({{ serie.date }})
+  </span>
+
+  <div class="actions">
+
+    <button
+      @click.stop="openResultats(serie)"
+    >
+      Résultats
+    </button>
+
+    <button
+      @click.stop="removeSerie(index)"
+    >
+      X
+    </button>
+
+  </div>
+
+</li>
     </ul>
 
     <!-- Selected série details -->
@@ -28,9 +47,6 @@
       <p><strong>Nom:</strong> {{ selectedSerie.nom }}</p>
       <p><strong>Date:</strong> {{ selectedSerie.date }}</p>
 
-      <button @click="openResultats">
-        Voir résultats
-      </button>
     </div>
   </div>
 </template>
@@ -79,10 +95,8 @@ function selectSerie(index) {
   selectedIndex.value = index
 }
 
-function openResultats() {
-  if (!selectedSerie.value) return
-
-  // you could also pass data later if needed
+function openResultats(serie) {
+  uiStore.selectedSerie = serie
   uiStore.open('resultats')
 }
 </script>
@@ -124,5 +138,15 @@ function openResultats() {
 .details {
   border-top: 2px solid #000;
   padding-top: 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.actions button {
+  font-size: 14px;
+  padding: 2px 6px;
 }
 </style>

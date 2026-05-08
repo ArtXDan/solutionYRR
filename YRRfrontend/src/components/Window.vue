@@ -1,9 +1,10 @@
 <template>
   <div
-    class="window"
-    :style="{ zIndex }"
-    @mousedown="bringToFront"
-  >
+  class="window"
+  :class="name"
+  :style="{ zIndex }"
+  @mousedown="bringToFront"
+>
     <div class="header">
       <span>{{ titles[name] }}</span>
       <button @click="close">X</button>
@@ -55,20 +56,30 @@ function bringToFront() {
 <style>
 .window {
   position: absolute;
+
   top: 50%;
   left: 50%;
+
   transform: translate(-50%, -50%);
-
-  
-  width: clamp(350px, 60vw, 700px);
-  height: clamp(300px, 70vh, 600px);
-
 
   background: white;
   border: 2px solid black;
 
   display: flex;
   flex-direction: column;
+}
+.window:not(.resultats) {
+  width: clamp(350px, 60vw, 700px);
+  height: clamp(300px, 70vh, 600px);
+}
+
+.window.resultats {
+
+  width: fit-content;
+  height: fit-content;
+
+  max-width: 95vw;
+  max-height: 90vh;
 }
 
 .header {
