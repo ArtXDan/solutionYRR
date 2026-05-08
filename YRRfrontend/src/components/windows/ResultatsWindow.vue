@@ -81,6 +81,7 @@ import { onMounted } from 'vue'
 
 onMounted(() => {
   loadResultats()
+  loadBoats()
 })
 
 const selectedSerie = uiStore.selectedSerie
@@ -89,47 +90,40 @@ const discardsEnabled = ref(false)
 
 const courses = ref([1, 2, 3])
 
-const boats = ref([
-  {
-    _id: 1,
-    nom: 'Black Pearl',
-    type: 'Laser',
-    numeroVoile: '123',
-    skippers: 'Jack'
-  },
-  {
-    _id: 2,
-    nom: 'Sea Wind',
-    type: '420',
-    numeroVoile: '456',
-    skippers: 'Anna'
-  }
-])
-
-const results = ref([
-  { boatId: 1, course: 1, points: 1 },
-  { boatId: 1, course: 2, points: 2 },
-  { boatId: 1, course: 3, points: 3 },
-
-  { boatId: 2, course: 1, points: 2 },
-  { boatId: 2, course: 2, points: 1 },
-  { boatId: 2, course: 3, points: 4 }
-])
+const boats = ref([])
 
 const API = 'http://localhost:3000/api/resultats'
 
 const resultats = ref([])
 
+const BOATS_API = 'http://localhost:3000/api/bateaux'
+
+async function loadBoats() {
+  try {
+    const res = await fetch(BOATS_API)
+    boats.value = await res.json()
+
+    console.log('BOATS FROM DB:', boats.value)
+  } catch (err) {
+    console.error('Erreur load boats:', err)
+  }
+}
+
 async function loadResultats() {
   try {
     const res = await fetch(API)
-    resultats.value = await res.json()
+
+    const data = await res.json()
+    resultats.value = data
+
+    console.log('RESULTATS FROM DB:', data)
+
   } catch (err) {
     console.error('Erreur load resultats:', err)
   }
 }
 
-async function addResultat(bateauId, course, points) {
+async function addResultat(boat, course, points) {
   try {
     const res = await fetch(API, {
       method: 'POST',
@@ -137,8 +131,8 @@ async function addResultat(bateauId, course, points) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        serieId: uiStore.selectedSerie._id,
-        bateauId,
+        serieId: selectedSerie._id,
+        bateauId: boat._id,
         course,
         points
       })
@@ -155,16 +149,20 @@ async function addResultat(bateauId, course, points) {
   }
 }
 
-function getPoints(boatId, course) {
+function getPoints(boat, course) {
   const r = resultats.value.find(
-    x => x.bateauId === boatId && x.course === course
+    x =>
+      x.bateauId?.toString() === boat._id?.toString() &&
+      x.course === course
   )
   return r ? r.points : '-'
 }
 
-function getTotal(boatId) {
+function getTotal(boat) {
   return resultats.value
-    .filter(r => r.bateauId === boatId)
+    .filter(r =>
+      r.bateauId?.toString() === boat._id?.toString()
+    )
     .reduce((sum, r) => sum + r.points, 0)
 }
 
@@ -189,7 +187,6 @@ function toggleDiscards() {
 </script>
 
 <style>
-
 
 .table-container {
   overflow: auto;

@@ -13,11 +13,19 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
+    console.log('BODY:', req.body)
+
     const resultat = new Resultat(req.body)
     await resultat.save()
+
     res.json(resultat)
+
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    console.error('POST ERROR:', err.message)
+
+    res.status(500).json({
+      error: err.message
+    })
   }
 })
 

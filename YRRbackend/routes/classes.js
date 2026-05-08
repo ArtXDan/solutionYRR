@@ -16,8 +16,9 @@ router.post('/', async (req, res) => {
     const classe = new Classe(req.body)
     await classe.save()
     res.json(classe)
+
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(400).json({ error: err.message })
   }
 })
 
