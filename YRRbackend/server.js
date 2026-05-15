@@ -27,6 +27,8 @@ app.use('/api/resultats', resultatsRoutes)
 
 app.use('/api/series', require('./routes/series'))
 
+app.use('/api/courses', require('./routes/courses'))
+
 app.get('/', (req, res) => {
   res.send('Backend is running')
 })

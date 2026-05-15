@@ -181,25 +181,39 @@ onMounted(() => {
 
 <style scoped>
 .bateaux-window {
-  padding: 10px;
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  padding: 10px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
   margin-bottom: 10px;
 }
 
 .form input,
 .form select {
-  padding: 5px;
+  padding: 5px 8px;
   font-family: inherit;
+  font-size: 14px;
+  border: 0.5px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  background: transparent;
+  color: inherit;
+}
+
+.form input:focus,
+.form select:focus {
+  border-color: #aac4f0;
+  background: #eef4ff;
 }
 
 .list {
@@ -214,21 +228,30 @@ onMounted(() => {
 }
 
 .list li {
-  border: 1px solid #ccc;
-  margin-bottom: 6px;
-  padding: 6px;
+  border-bottom: 0.5px solid #eee;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.list li:last-child { border-bottom: none; }
+
+.list li.active { background: #eef4ff; }
+
+.view-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  width: 100%;
   cursor: pointer;
 }
 
-.list li.active {
-  background: #d0e6ff;
-  cursor: default;
+.view-row:hover { color: #333; }
+
+.view-row small {
+  color: #888;
+  font-size: 12px;
 }
 
-/* Inline edit form inside list item */
 .edit-form {
   display: flex;
   flex-direction: column;
@@ -238,10 +261,20 @@ onMounted(() => {
 
 .edit-form input,
 .edit-form select {
-  padding: 4px;
+  padding: 4px 8px;
   font-family: inherit;
-  border: 1px solid #aaa;
-  border-radius: 3px;
+  font-size: 14px;
+  border: 0.5px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  background: transparent;
+  color: inherit;
+}
+
+.edit-form input:focus,
+.edit-form select:focus {
+  border-color: #aac4f0;
+  background: #eef4ff;
 }
 
 .edit-actions {
@@ -251,25 +284,18 @@ onMounted(() => {
 }
 
 .info {
+  font-size: 13px;
   font-style: italic;
-  color: #666;
+  color: #888;
   margin-bottom: 8px;
 }
 
 .error-box {
-  padding: 6px 8px;
+  padding: 6px 10px;
   background: #ffdddd;
   border: 1px solid red;
   color: #900;
   font-size: 13px;
-  font-weight: bold;
-}
-
-.view-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-  cursor: pointer;
+  border-radius: 4px;
 }
 </style>
