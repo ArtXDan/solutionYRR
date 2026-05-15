@@ -4,8 +4,8 @@ const Resultat = require('../models/Resultat')
 
 router.get('/', async (req, res) => {
   try {
-    const resultats = await Resultat.find()
-    res.json(resultats)
+    const filter = req.query.serieId ? { serieId: req.query.serieId } : {}
+    res.json(await Resultat.find(filter))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -26,6 +26,15 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       error: err.message
     })
+  }
+})
+
+router.put('/:id', async (req, res) => {
+  try {
+    const r = await Resultat.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    res.json(r)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 

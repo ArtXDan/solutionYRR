@@ -25,6 +25,8 @@ app.use('/api/classes', classesRoutes)
 const resultatsRoutes = require('./routes/resultats')
 app.use('/api/resultats', resultatsRoutes)
 
+app.use('/api/series', require('./routes/series'))
+
 app.get('/', (req, res) => {
   res.send('Backend is running')
 })

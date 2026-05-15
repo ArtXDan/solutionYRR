@@ -1,64 +1,63 @@
 <template>
   <div class="bateaux-window">
 
-    <!-- FORM -->
+    <!-- ADD FORM -->
     <div class="form">
-      <input v-model="newBateau.nom" placeholder="Nom du bateau" />
-      <input v-model="newBateau.type" placeholder="Type (voilier, etc.)" />
-      <input v-model="newBateau.skippers" placeholder="Skipper(s)" />
-
-      <select v-model="newBateau.serie">
-        <option disabled value="">Associer une série</option>
-        <option v-for="s in seriesList" :key="s" :value="s">
-          {{ s }}
-        </option>
+      <input v-model="draft.nom"         placeholder="Nom du bateau" />
+      <input v-model="draft.type"        placeholder="Type (voilier, etc.)" />
+      <input v-model="draft.numeroVoile" placeholder="N° voile" />
+      <input v-model="draft.skippers"    placeholder="Skipper(s)" />
+      <select v-model="draft.serie">
+        <option value="">Associer une série</option>
+        <option v-for="s in seriesList" :key="s._id" :value="s._id">{{ s.nom }}</option>
       </select>
-
-      <button @click="addBateau">Ajouter</button>
+      <div v-if="error" class="error-box">⚠ {{ error }}</div>
+      <button @click="addFromDraft">Ajouter</button>
     </div>
 
     <!-- LIST -->
     <div class="list">
-      <h3>Liste des bateaux</h3>
+      <div v-if="bateaux.length === 0" class="info">Aucun bateau enregistré.</div>
 
       <ul>
         <li
-          v-for="bateau in bateaux"
-          :key="bateau._id"
-          @click="selectBateau(bateau)"
-          :class="{ active: selectedBateau?._id === bateau._id }"
+          v-for="b in bateaux"
+          :key="b._id"
+          :class="{ active: editingId === b._id }"
         >
-          <div>
-            <strong>{{ bateau.nom }}</strong>
-            — {{ bateau.type }}
-            <br />
-            <small>
-              Skipper: {{ bateau.skippers }} | Série: {{ bateau.serie }}
-            </small>
-          </div>
+          <!-- View mode — click anywhere to open edit -->
+          <template v-if="editingId !== b._id">
+            <div class="view-row" @click="startEdit(b)">
+              <div>
+                <strong>{{ b.nom }}</strong> — {{ b.type }}
+                <br />
+                <small>Voile: {{ b.numeroVoile }} | Skipper: {{ b.skippers }}</small>
+              </div>
+              <button class="cancel" @click.stop="deleteBateau(b)">X</button>
+            </div>
+          </template>
 
-          <button @click.stop="removeBateau(bateau)">X</button>
+          <!-- Edit mode -->
+          <template v-else>
+            <div class="edit-form">
+              <input v-model="editDraft.nom"         placeholder="Nom" />
+              <input v-model="editDraft.type"        placeholder="Type" />
+              <input v-model="editDraft.numeroVoile" placeholder="N° voile" />
+              <input v-model="editDraft.skippers"    placeholder="Skipper(s)" />
+              <select v-model="editDraft.serie">
+                <option value="">Aucune série</option>
+                <option v-for="s in seriesList" :key="s._id" :value="s._id">{{ s.nom }}</option>
+              </select>
+              <div class="edit-actions">
+                <button @click="saveEdit(b)">Save</button>
+                <button @click="cancelEdit">Annuler</button>
+                <button class="cancel" @click="deleteBateau(b)">Supprimer</button>
+              </div>
+            </div>
+          </template>
+
         </li>
       </ul>
-    </div>
-
-    <!-- DETAILS -->
-    <div class="details" v-if="selectedBateau && showDetails">
-
-  <div class="details-header">
-    <h3>Détails du bateau</h3>
-    <button class="close-btn" @click="closeDetails">✕</button>
-  </div>
-
-  <p><strong>Nom:</strong> {{ selectedBateau.nom }}</p>
-  <p><strong>Type:</strong> {{ selectedBateau.type }}</p>
-  <p><strong>Skipper(s):</strong> {{ selectedBateau.skippers }}</p>
-  <p><strong>Série:</strong> {{ selectedBateau.serie }}</p>
-
-</div>
-
-    <div v-if="bateaux.length === 0" class="info">
-      Aucun bateau enregistré.
     </div>
 
   </div>
@@ -67,109 +66,116 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const API = 'http://localhost:3000/api/bateaux'
+const API       = 'http://localhost:3000/api/bateaux'
+const SERIE_API = 'http://localhost:3000/api/series'
 
+const bateaux    = ref([])
+const seriesList = ref([])
+const error      = ref('')
+const editingId  = ref(null)
+const editDraft  = ref({})
+const draft      = ref(createDraft())
 
-const bateaux = ref([])
-const selectedBateau = ref(null)
-const showDetails = ref(false)
-
-const newBateau = ref({
-  nom: '',
-  type: '',
-  skippers: '',
-  serie: ''
-})
-
-const seriesList = ref([
-  'Série A',
-  'Série B',
-  'Série C'
-])
-
+function createDraft() {
+  return { nom: '', type: '', numeroVoile: '', skippers: '', serie: '' }
+}
 
 async function loadBateaux() {
   try {
     const res = await fetch(API)
-
-    if (!res.ok) {
-      throw new Error('Erreur API')
-    }
-
     bateaux.value = await res.json()
-
-    console.log(bateaux.value)
-  } catch (err) {
-    console.error('Erreur chargement bateaux:', err)
+  } catch {
+    error.value = 'Erreur chargement bateaux'
   }
 }
 
-async function addBateau() {
-  if (
-    !newBateau.value.nom ||
-    !newBateau.value.type ||
-    !newBateau.value.skippers ||
-    !newBateau.value.serie
-  ) return
+async function loadSeries() {
+  try {
+    const res = await fetch(SERIE_API)
+    if (!res.ok) throw new Error()
+    seriesList.value = await res.json()
+  } catch {
+    // not critical
+  }
+}
 
+async function addFromDraft() {
+  error.value = ''
+  if (!draft.value.nom || !draft.value.type || !draft.value.skippers) {
+    error.value = 'Nom, type et skipper sont requis'
+    return
+  }
   try {
     const res = await fetch(API, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newBateau.value)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(draft.value)
     })
-
     const data = await res.json()
-
-    console.log('Réponse API:', data)
-
-    if (!res.ok) {
-      throw new Error(data.error)
-    }
-
-    newBateau.value = {
-      nom: '',
-      type: '',
-      skippers: '',
-      serie: ''
-    }
-
+    if (!res.ok) throw new Error(data.error || 'Erreur serveur')
+    draft.value = createDraft()
     await loadBateaux()
-
   } catch (err) {
-    console.error('Erreur ajout bateau:', err)
+    error.value = err.message
   }
 }
 
-async function removeBateau(bateau) {
+function startEdit(b) {
+  editingId.value = b._id
+  editDraft.value = {
+    nom:         b.nom         ?? '',
+    type:        b.type        ?? '',
+    numeroVoile: b.numeroVoile ?? '',
+    skippers:    b.skippers    ?? '',
+    serie:       b.serie?._id  ?? b.serie ?? ''
+  }
+}
+
+function cancelEdit() {
+  editingId.value = null
+  editDraft.value = {}
+}
+
+async function saveEdit(b) {
+  error.value = ''
+  if (!editDraft.value.nom || !editDraft.value.type || !editDraft.value.skippers) {
+    error.value = 'Nom, type et skipper sont requis'
+    return
+  }
   try {
-    await fetch(`${API}/${bateau._id}`, {
-      method: 'DELETE'
+    const res = await fetch(`${API}/${b._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nom:         editDraft.value.nom,
+        type:        editDraft.value.type,
+        numeroVoile: editDraft.value.numeroVoile,
+        skippers:    editDraft.value.skippers,
+        serie:       editDraft.value.serie
+      })
     })
-
-    if (selectedBateau.value?._id === bateau._id) {
-      selectedBateau.value = null
-    }
-
-    loadBateaux()
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Erreur serveur')
+    cancelEdit()
+    await loadBateaux()
   } catch (err) {
-    console.error('Erreur suppression bateau:', err)
+    error.value = err.message
   }
 }
 
-function selectBateau(bateau) {
-  selectedBateau.value = bateau
-  showDetails.value = true
-}
-
-function closeDetails() {
-  showDetails.value = false
+async function deleteBateau(b) {
+  try {
+    await fetch(`${API}/${b._id}`, { method: 'DELETE' })
+    cancelEdit()
+    await loadBateaux()
+  } catch {
+    error.value = 'Erreur suppression'
+  }
 }
 
 onMounted(() => {
   loadBateaux()
+  loadSeries()
 })
 </script>
 
@@ -180,6 +186,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .form {
@@ -192,14 +199,9 @@ onMounted(() => {
 .form input,
 .form select {
   padding: 5px;
+  font-family: inherit;
 }
 
-.form button {
-  padding: 6px;
-  cursor: pointer;
-}
-
-/* LIST */
 .list {
   flex: 1;
   overflow-y: auto;
@@ -217,36 +219,57 @@ onMounted(() => {
   padding: 6px;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   cursor: pointer;
 }
 
 .list li.active {
   background: #d0e6ff;
+  cursor: default;
 }
 
-/* DETAILS */
-.details {
-  border-top: 2px solid #000;
-  margin-top: 10px;
-  padding-top: 10px;
+/* Inline edit form inside list item */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
 }
 
-/* INFO */
+.edit-form input,
+.edit-form select {
+  padding: 4px;
+  font-family: inherit;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .info {
-  margin-top: 10px;
   font-style: italic;
   color: #666;
-}
-.details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin-bottom: 8px;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
+.error-box {
+  padding: 6px 8px;
+  background: #ffdddd;
+  border: 1px solid red;
+  color: #900;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.view-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
   cursor: pointer;
 }
 </style>

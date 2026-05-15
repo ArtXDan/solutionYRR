@@ -26,6 +26,20 @@ router.post('/', async (req, res) => {
   }
 })
 
+router.put('/:id', async (req, res) => {
+  try {
+    console.log('PUT bateau body:', req.body)  // check serie is here
+    const bateau = await Bateau.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    )
+    res.json(bateau)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 router.delete('/:id', async (req, res) => {
   try {
     await Bateau.findByIdAndDelete(req.params.id)
