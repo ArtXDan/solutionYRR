@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
   }
 })
 router.put('/:id', async (req, res) => {
-  const updated = await Class.findByIdAndUpdate(
+  const updated = await Classe.findByIdAndUpdate(
     req.params.id,
     req.body,
     { new: true }
